@@ -1,0 +1,21 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{public function up()
+{
+    Schema::create('menus', function (Blueprint $table) {
+        $table->id();
+        $table->string('name');         
+        $table->string('route')->nullable();  
+        $table->string('type')->default('link'); 
+        $table->unsignedBigInteger('parent_id')->nullable();
+        $table->integer('order')->default(0); 
+        $table->timestamps();
+    });
+}
+
+};
