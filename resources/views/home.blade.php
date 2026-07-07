@@ -118,7 +118,7 @@
         @foreach($categories as $cat)
             <div class="col-lg-4 col-md-6 pb-1">
                 <div class="cat-item d-flex flex-column border mb-4" style="padding: 30px;">
-                    <p class="text-right">{{ $cat->products->count() }} Products</p>
+                    <p class="text-right">{{ $cat->products_count }} Products</p>
                     <a href="{{ route('shop', $cat->id) }}" class="cat-img position-relative overflow-hidden mb-3">
                         <img class="img-fluid" src="{{ asset('img/cat-' . $loop->index + 1 . '.jpg') }}" alt="">
                     </a>
