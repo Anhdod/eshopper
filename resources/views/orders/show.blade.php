@@ -43,11 +43,21 @@
                         <span>Shipping</span>
                         <span>${{ number_format($order->shipping, 2) }}</span>
                     </div>
+                    @if(($order->discount ?? 0) > 0)
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Discount {{ $order->coupon_code ? '(' . $order->coupon_code . ')' : '' }}</span>
+                            <span class="text-success">-${{ number_format($order->discount, 2) }}</span>
+                        </div>
+                    @endif
                     <div class="d-flex justify-content-between mb-2">
                         <strong>Total</strong>
                         <strong>${{ number_format($order->total, 2) }}</strong>
                     </div>
                     <p class="mb-1"><strong>Status:</strong> {{ ucfirst($order->status) }}</p>
+                    <p class="mb-1"><strong>Payment:</strong> {{ ucfirst($order->payment_status ?? 'unpaid') }}</p>
+                    @if($order->payment_status !== 'paid' && in_array($order->payment_method, ['online', 'paypal'], true))
+                        <p class="mb-2"><a href="{{ route('payment.show', $order) }}" class="btn btn-sm btn-primary">Pay now</a></p>
+                    @endif
                     <p class="mb-1"><strong>Name:</strong> {{ $order->first_name }} {{ $order->last_name }}</p>
                     <p class="mb-1"><strong>Phone:</strong> {{ $order->phone }}</p>
                     <p class="mb-0"><strong>Address:</strong> {{ $order->address1 }}, {{ $order->city }}, {{ $order->country }}</p>

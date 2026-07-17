@@ -1,26 +1,26 @@
 @extends('admin.layout')
-@section('title', 'Thêm sản phẩm')
+@section('title', 'Them san pham')
 
 @section('content')
-<h3>Thêm sản phẩm mới</h3>
+<h3>Them san pham moi</h3>
 
 <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data">
     @csrf
     <div class="row">
         <div class="col-md-8">
             <div class="mb-3">
-                <label>Tên sản phẩm</label>
-                <input type="text" name="name" class="form-control" required>
+                <label>Ten san pham</label>
+                <input type="text" name="name" value="{{ old('name') }}" class="form-control" required>
             </div>
 
             <div class="mb-3">
-                <label>Danh mục</label>
+                <label>Danh muc</label>
                 <select name="category_id" class="form-control" required>
-                    <option value="">-- Chọn danh mục --</option>
+                    <option value="">-- Chon danh muc --</option>
                     @foreach($categories as $cat)
-                        <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                        <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
                         @foreach($cat->children as $child)
-                            <option value="{{ $child->id }}">-- {{ $child->name }}</option>
+                            <option value="{{ $child->id }}" {{ old('category_id') == $child->id ? 'selected' : '' }}>-- {{ $child->name }}</option>
                         @endforeach
                     @endforeach
                 </select>
@@ -28,12 +28,12 @@
 
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label>Giá bán</label>
-                    <input type="number" name="price" step="0.01" class="form-control" required>
+                    <label>Gia ban</label>
+                    <input type="number" name="price" value="{{ old('price') }}" step="0.01" class="form-control" required>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label>Giá gốc</label>
-                    <input type="number" name="original_price" step="0.01" class="form-control">
+                    <label>Gia goc</label>
+                    <input type="number" name="original_price" value="{{ old('original_price') }}" step="0.01" class="form-control">
                 </div>
             </div>
 
@@ -58,12 +58,18 @@
             </div>
 
             <div class="mb-3">
-                <label>Hình ảnh</label>
+                <label>Hinh dai dien</label>
                 <input type="file" name="image" class="form-control">
             </div>
 
-            <button type="submit" class="btn btn-success">Thêm sản phẩm</button>
-            <a href="{{ route('admin.products.index') }}" class="btn btn-secondary">Quay lại</a>
+            <div class="mb-3">
+                <label>Gallery images</label>
+                <input type="file" name="gallery_images[]" class="form-control" multiple>
+                <small class="text-muted">Upload multiple extra product images.</small>
+            </div>
+
+            <button type="submit" class="btn btn-success">Them san pham</button>
+            <a href="{{ route('admin.products.index') }}" class="btn btn-secondary">Quay lai</a>
         </div>
     </div>
 </form>

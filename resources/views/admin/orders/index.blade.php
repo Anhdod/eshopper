@@ -35,7 +35,7 @@
                 <td>{{ $order->first_name }} {{ $order->last_name }}<br><small>{{ $order->email }}</small></td>
                 <td>{{ $order->items_count }}</td>
                 <td>${{ number_format($order->total, 2) }}</td>
-                <td>{{ $order->payment_method }}</td>
+                <td>{{ $order->payment_method }}<br><small>{{ ucfirst($order->payment_status ?? 'unpaid') }}</small></td>
                 <td><span class="badge bg-secondary">{{ $order->status }}</span></td>
                 <td>{{ $order->created_at->format('d/m/Y H:i') }}</td>
                 <td><a href="{{ route('admin.orders.show', $order) }}" class="btn btn-sm btn-info">Chi tiet</a></td>

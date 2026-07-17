@@ -15,6 +15,8 @@
                 <li class="nav-item"><a href="{{ route('admin.dashboard') }}" class="nav-link text-white"><i class="bi bi-house"></i> Dashboard</a></li>
                 <li class="nav-item"><a href="{{ route('admin.products.index') }}" class="nav-link text-white"><i class="bi bi-box"></i> Products</a></li>
                 <li class="nav-item"><a href="{{ route('admin.orders.index') }}" class="nav-link text-white"><i class="bi bi-receipt"></i> Orders</a></li>
+                <li class="nav-item"><a href="{{ route('admin.coupons.index') }}" class="nav-link text-white"><i class="bi bi-ticket-perforated"></i> Coupons</a></li>
+                <li class="nav-item"><a href="{{ route('admin.reports.revenue') }}" class="nav-link text-white"><i class="bi bi-graph-up"></i> Revenue</a></li>
                 <li class="nav-item"><a href="{{ route('admin.categories.index') }}" class="nav-link text-white"><i class="bi bi-tags"></i> Categories</a></li>
                 <li class="nav-item"><a href="{{ route('admin.menus.index') }}" class="nav-link text-white"><i class="bi bi-list"></i> Menus</a></li>
                 <li class="nav-item"><a href="{{ route('admin.contacts.index') }}" class="nav-link text-white"><i class="bi bi-envelope"></i> Contacts</a></li>

@@ -29,6 +29,10 @@ class Product extends Model
         'sizes'  => 'array',
     ];
 
+    protected $appends = [
+        'images',
+    ];
+
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id');
@@ -37,5 +41,23 @@ class Product extends Model
     public function reviews()
     {
         return $this->hasMany(Review::class);
+    }
+
+    public function galleryImages()
+    {
+        return $this->hasMany(ProductImage::class)->orderBy('sort_order');
+    }
+
+    public function getImagesAttribute(): array
+    {
+        $images = $this->galleryImages
+            ? $this->galleryImages->pluck('path')->filter()->values()->all()
+            : [];
+
+        if ($this->image && ! in_array($this->image, $images, true)) {
+            array_unshift($images, $this->image);
+        }
+
+        return $images;
     }
 }

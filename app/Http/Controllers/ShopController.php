@@ -10,7 +10,7 @@ class ShopController extends Controller
 {
     public function index(Request $request, $category = null)
     {
-        $query = Product::query();
+        $query = Product::with('galleryImages');
         $cat = null;
 
         if ($category) {
@@ -28,14 +28,36 @@ class ShopController extends Controller
             });
         }
 
-        if ($request->filled('price')) {
+        if ($request->filled('price') && str_contains($request->price, '-')) {
             [$min, $max] = explode('-', $request->price);
             $query->whereBetween('price', [$min, $max]);
+        }
+
+        if ($request->filled('min_price')) {
+            $query->where('price', '>=', (float) $request->min_price);
+        }
+
+        if ($request->filled('max_price')) {
+            $query->where('price', '<=', (float) $request->max_price);
         }
 
         if ($request->filled('color')) {
             $query->whereJsonContains('color', $request->color);
         }
+
+        if ($request->boolean('in_stock')) {
+            $query->where(function ($stockQuery) {
+                $stockQuery->whereNull('stock')->orWhere('stock', '>', 0);
+            });
+        }
+
+        match ($request->get('sort')) {
+            'price_asc' => $query->orderBy('price'),
+            'price_desc' => $query->orderByDesc('price'),
+            'name_asc' => $query->orderBy('name'),
+            'newest' => $query->latest(),
+            default => $query->latest(),
+        };
 
         $totalProducts = $query->count();
         $priceRanges = [

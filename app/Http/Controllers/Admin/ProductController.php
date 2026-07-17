@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductImage;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -31,7 +32,8 @@ class ProductController extends Controller
             $data['image'] = $this->saveImage($request);
         }
 
-        Product::create($data);
+        $product = Product::create($data);
+        $this->saveGalleryImages($request, $product);
 
         return redirect()->route('admin.products.index')->with('success', 'Them san pham thanh cong!');
     }
@@ -43,7 +45,7 @@ class ProductController extends Controller
 
     public function edit($id)
     {
-        $product = Product::findOrFail($id);
+        $product = Product::with('galleryImages')->findOrFail($id);
         $categories = Category::whereNull('parent_id')->with('children')->get();
 
         return view('admin.products.edit', compact('product', 'categories'));
@@ -60,14 +62,16 @@ class ProductController extends Controller
         }
 
         $product->update($data);
+        $this->saveGalleryImages($request, $product);
 
         return redirect()->route('admin.products.index')->with('success', 'Cap nhat thanh cong!');
     }
 
     public function destroy($id)
     {
-        $product = Product::findOrFail($id);
+        $product = Product::with('galleryImages')->findOrFail($id);
         $this->deleteImage($product);
+        $this->deleteGalleryImages($product);
         $product->delete();
 
         return back()->with('success', 'Xoa san pham thanh cong!');
@@ -85,12 +89,15 @@ class ProductController extends Controller
             'sizes' => 'nullable|string|max:255',
             'stock' => 'nullable|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'gallery_images' => 'nullable|array',
+            'gallery_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $data['color'] = $this->splitList($request->color);
         $data['sizes'] = $this->splitList($request->sizes);
 
         unset($data['image']);
+        unset($data['gallery_images']);
 
         return $data;
     }
@@ -107,6 +114,33 @@ class ProductController extends Controller
     {
         if ($product->image && file_exists(public_path('img/' . $product->image))) {
             @unlink(public_path('img/' . $product->image));
+        }
+    }
+
+    private function deleteGalleryImages(Product $product): void
+    {
+        foreach ($product->galleryImages as $galleryImage) {
+            if ($galleryImage->path && file_exists(public_path('img/' . $galleryImage->path))) {
+                @unlink(public_path('img/' . $galleryImage->path));
+            }
+        }
+    }
+
+    private function saveGalleryImages(Request $request, Product $product): void
+    {
+        if (! $request->hasFile('gallery_images')) {
+            return;
+        }
+
+        foreach ($request->file('gallery_images') as $index => $image) {
+            $imageName = time() . '_' . $index . '_' . preg_replace('/[^A-Za-z0-9._-]/', '_', $image->getClientOriginalName());
+            $image->move(public_path('img'), $imageName);
+
+            ProductImage::create([
+                'product_id' => $product->id,
+                'path' => $imageName,
+                'sort_order' => $product->galleryImages()->count() + $index,
+            ]);
         }
     }
 

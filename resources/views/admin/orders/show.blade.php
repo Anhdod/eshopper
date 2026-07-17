@@ -15,8 +15,13 @@
             <tr><th>Dien thoai</th><td>{{ $order->phone }}</td></tr>
             <tr><th>Dia chi</th><td>{{ $order->address1 }} {{ $order->address2 }} - {{ $order->city }}, {{ $order->state }}, {{ $order->country }} {{ $order->zip }}</td></tr>
             <tr><th>Payment</th><td>{{ $order->payment_method }}</td></tr>
+            <tr><th>Payment status</th><td>{{ ucfirst($order->payment_status ?? 'unpaid') }}</td></tr>
+            @if($order->transaction_id)
+                <tr><th>Transaction</th><td>{{ $order->transaction_id }}</td></tr>
+            @endif
             <tr><th>Subtotal</th><td>${{ number_format($order->subtotal, 2) }}</td></tr>
             <tr><th>Shipping</th><td>${{ number_format($order->shipping, 2) }}</td></tr>
+            <tr><th>Discount</th><td>-${{ number_format($order->discount ?? 0, 2) }} {{ $order->coupon_code ? '(' . $order->coupon_code . ')' : '' }}</td></tr>
             <tr><th>Total</th><td><strong>${{ number_format($order->total, 2) }}</strong></td></tr>
         </table>
     </div>

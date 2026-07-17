@@ -19,13 +19,9 @@
                 <select name="category_id" class="form-control" required>
                     <option value="">-- Chon danh muc --</option>
                     @foreach($categories as $cat)
-                        <option value="{{ $cat->id }}" {{ old('category_id', $product->category_id) == $cat->id ? 'selected' : '' }}>
-                            {{ $cat->name }}
-                        </option>
+                        <option value="{{ $cat->id }}" {{ old('category_id', $product->category_id) == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
                         @foreach($cat->children as $child)
-                            <option value="{{ $child->id }}" {{ old('category_id', $product->category_id) == $child->id ? 'selected' : '' }}>
-                                -- {{ $child->name }}
-                            </option>
+                            <option value="{{ $child->id }}" {{ old('category_id', $product->category_id) == $child->id ? 'selected' : '' }}>-- {{ $child->name }}</option>
                         @endforeach
                     @endforeach
                 </select>
@@ -63,13 +59,28 @@
             </div>
 
             <div class="mb-3">
-                <label>Hinh anh hien tai</label><br>
+                <label>Hinh dai dien hien tai</label><br>
                 @if($product->image)
                     <img src="{{ asset('img/' . $product->image) }}" alt="{{ $product->name }}" width="100" class="mb-2">
                 @else
                     <p class="text-muted">Khong co hinh</p>
                 @endif
                 <input type="file" name="image" class="form-control">
+            </div>
+
+            <div class="mb-3">
+                <label>Gallery images</label>
+                @if($product->galleryImages->isNotEmpty())
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        @foreach($product->galleryImages as $galleryImage)
+                            <img src="{{ asset('img/' . $galleryImage->path) }}" alt="{{ $product->name }}" width="80" class="border">
+                        @endforeach
+                    </div>
+                @else
+                    <p class="text-muted">No gallery images</p>
+                @endif
+                <input type="file" name="gallery_images[]" class="form-control" multiple>
+                <small class="text-muted">New uploads will be added to the current gallery.</small>
             </div>
 
             <button type="submit" class="btn btn-success">Cap nhat</button>

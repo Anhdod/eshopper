@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CartItem;
+use App\Models\Coupon;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,15 +22,47 @@ class CheckoutController extends Controller
 
         $subtotal = $cartItems->sum(fn ($item) => $item->product->price * $item->quantity);
         $shipping = 10.00;
+        $coupon = $this->couponFromSession($subtotal);
+        $discount = $coupon ? $coupon->discountFor($subtotal) : 0;
 
         return view('checkout', [
             'cartItems' => $cartItems,
             'subtotal' => $subtotal,
             'shipping' => $shipping,
-            'total' => $subtotal + $shipping,
+            'discount' => $discount,
+            'coupon' => $coupon,
+            'total' => $subtotal + $shipping - $discount,
             'active' => 'checkout',
             'banner' => ['CHECKOUT', 'Checkout'],
         ]);
+    }
+
+    public function applyCoupon(Request $request)
+    {
+        $data = $request->validate([
+            'coupon_code' => 'required|string|max:255',
+        ]);
+
+        $cartItems = CartItem::where('user_id', Auth::id())->with('product')->get();
+        $subtotal = $cartItems->sum(fn ($item) => $item->product->price * $item->quantity);
+        $coupon = Coupon::where('code', strtoupper(trim($data['coupon_code'])))->first();
+
+        if (! $coupon || ! $coupon->isValidFor($subtotal)) {
+            session()->forget('coupon_code');
+
+            return back()->withErrors(['coupon_code' => 'Ma giam gia khong hop le hoac khong du dieu kien.']);
+        }
+
+        session(['coupon_code' => $coupon->code]);
+
+        return back()->with('success', 'Da ap dung ma giam gia.');
+    }
+
+    public function removeCoupon()
+    {
+        session()->forget('coupon_code');
+
+        return back()->with('success', 'Da bo ma giam gia.');
     }
 
     public function store(Request $request)
@@ -56,7 +89,7 @@ class CheckoutController extends Controller
             'ship_city' => 'nullable|string|max:255',
             'ship_state' => 'nullable|string|max:255',
             'ship_zip' => 'nullable|string|max:30',
-            'payment' => 'required|string|in:paypal,directcheck,banktransfer',
+            'payment' => 'required|string|in:cod,paypal,directcheck,banktransfer,online',
         ]);
 
         $cartItems = CartItem::where('user_id', Auth::id())->with('product')->get();
@@ -67,8 +100,10 @@ class CheckoutController extends Controller
 
         $subtotal = $cartItems->sum(fn ($item) => $item->product->price * $item->quantity);
         $shipping = 10.00;
+        $coupon = $this->couponFromSession($subtotal);
+        $discount = $coupon ? $coupon->discountFor($subtotal) : 0;
 
-        $order = DB::transaction(function () use ($cartItems, $data, $subtotal, $shipping) {
+        $order = DB::transaction(function () use ($cartItems, $data, $subtotal, $shipping, $coupon, $discount) {
             $order = Order::create([
                 'user_id' => Auth::id(),
                 'order_number' => 'DH-' . now()->format('YmdHis') . '-' . Str::upper(Str::random(4)),
@@ -96,9 +131,13 @@ class CheckoutController extends Controller
                     'zip' => $data['ship_zip'] ?? null,
                 ] : null,
                 'payment_method' => $data['payment'],
+                'coupon_id' => $coupon?->id,
+                'coupon_code' => $coupon?->code,
                 'subtotal' => $subtotal,
                 'shipping' => $shipping,
-                'total' => $subtotal + $shipping,
+                'discount' => $discount,
+                'total' => $subtotal + $shipping - $discount,
+                'payment_status' => in_array($data['payment'], ['paypal', 'online'], true) ? 'pending' : 'unpaid',
             ]);
 
             foreach ($cartItems as $item) {
@@ -118,10 +157,38 @@ class CheckoutController extends Controller
             }
 
             CartItem::where('user_id', Auth::id())->delete();
+            session()->forget('coupon_code');
+
+            if ($coupon) {
+                $coupon->increment('used_count');
+            }
 
             return $order;
         });
 
+        if (in_array($order->payment_method, ['online', 'paypal'], true)) {
+            return redirect()->route('payment.show', $order)->with('success', 'Dat hang thanh cong, vui long thanh toan de hoan tat don hang.');
+        }
+
         return redirect()->route('home')->with('success', 'Dat hang thanh cong! Ma don hang: ' . $order->order_number);
+    }
+
+    private function couponFromSession(float $subtotal): ?Coupon
+    {
+        $code = session('coupon_code');
+
+        if (! $code) {
+            return null;
+        }
+
+        $coupon = Coupon::where('code', $code)->first();
+
+        if (! $coupon || ! $coupon->isValidFor($subtotal)) {
+            session()->forget('coupon_code');
+
+            return null;
+        }
+
+        return $coupon;
     }
 }
